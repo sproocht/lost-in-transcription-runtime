@@ -22,33 +22,22 @@ WHISPER_PROMPT = [
 ]
 
 def test_ctranslate2():
-    """Import torch before ctranslate2 on purpose.
+    """Check that ctranslate2 imports and counts the GPU.
 
-    The ctranslate2 wheel does not bundle cuBLAS or cuDNN. It resolves them at
-    import time against libraries already loaded in the process. torch ships
-    and loads those same nvidia-*-cu12 libraries, so importing torch first is
-    what makes the GPU path of ctranslate2 work without adding a second CUDA.
-
-    GPU decode additionally needs the pip-installed cuDNN directory on the
-    loader path (ctranslate2 dlopens libcudnn_ops.so.9 by name and does not
-    share torch's rpath):
-
-        export LD_LIBRARY_PATH=$(python -c "import glob,site,os;print(os.path.dirname(glob.glob(site.getsitepackages()[0]+'/nvidia/cudnn/lib/libcudnn_ops.so*')[0]))"):$LD_LIBRARY_PATH
-
-    Verified on an A10 with the dev image: float16 transcribe succeeds.
+    This test cannot see a broken GPU path. ctranslate2 opens cuBLAS by name
+    at the first computation on the GPU, not at import, so nothing here
+    reaches that code. test_ctranslate2_whisper_gpu_decode covers it.
     """
-    import torch  # noqa: F401
-
     import ctranslate2
 
-    assert ctranslate2.get_cuda_device_count() >= 0
+    assert ctranslate2.get_cuda_device_count() >= 1, (
+        "ctranslate2 cannot see a CUDA device"
+    )
 
 
 def test_faster_whisper():
-    """faster-whisper wraps ctranslate2, so the same import order applies."""
-    import torch  # noqa: F401
-
     from faster_whisper import WhisperModel  # noqa: F401
+
 
 def _tiny_whisper_model(path):
     """Write a one-layer Whisper model with random weights in CT2 format.
@@ -126,17 +115,15 @@ def _tiny_whisper_model(path):
 def test_ctranslate2_whisper_gpu_decode(tmp_path):
     """Run a Whisper model on the GPU to check that ctranslate2 finds CUDA.
 
-    An import-only test cannot see this break. libctranslate2 does not link
-    cuBLAS. It calls dlopen on the literal soname libcublas.so.12 the first
-    time a model runs on the GPU, so nothing tries to load it until then. The
-    bundled cuDNN file is a dispatcher that loads libcudnn_ops.so and its
-    siblings by bare name at the same point. Both libraries sit in
-    site-packages, which the loader does not search. So the two import tests
-    above pass on a machine with no CUDA at all, while a real GPU transcribe
-    fails. Encode and generate here to make that failure visible.
+    An import test cannot see this break. libctranslate2 does not link cuBLAS.
+    It opens the soname libcublas.so.12 the first time a model computes on the
+    GPU. The bundled cuDNN file is a dispatcher that opens its sublibraries by
+    name at the same point. Both live under site-packages, which the loader
+    does not search, so the Dockerfile adds those directories to the loader
+    cache. Without that the import tests still pass and this test aborts the
+    process.
     """
     import numpy as np
-    import torch  # noqa: F401
 
     import ctranslate2
 
