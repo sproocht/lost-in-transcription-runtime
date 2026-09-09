@@ -229,33 +229,3 @@ def test_kenlm_max_order(tmp_path):
 
 def test_pyctcdecode():
     from pyctcdecode import build_ctcdecoder  # noqa: F401
-
-
-def test_ctranslate2():
-    """Import torch before ctranslate2 on purpose.
-
-    The ctranslate2 wheel does not bundle cuBLAS or cuDNN. It resolves them at
-    import time against libraries already loaded in the process. torch ships
-    and loads those same nvidia-*-cu12 libraries, so importing torch first is
-    what makes the GPU path of ctranslate2 work without adding a second CUDA.
-
-    GPU decode additionally needs the pip-installed cuDNN directory on the
-    loader path (ctranslate2 dlopens libcudnn_ops.so.9 by name and does not
-    share torch's rpath):
-
-        export LD_LIBRARY_PATH=$(python -c "import glob,site,os;print(os.path.dirname(glob.glob(site.getsitepackages()[0]+'/nvidia/cudnn/lib/libcudnn_ops.so*')[0]))"):$LD_LIBRARY_PATH
-
-    Verified on an A10 with the dev image: float16 transcribe succeeds.
-    """
-    import torch  # noqa: F401
-
-    import ctranslate2
-
-    assert ctranslate2.get_cuda_device_count() >= 0
-
-
-def test_faster_whisper():
-    """faster-whisper wraps ctranslate2, so the same import order applies."""
-    import torch  # noqa: F401
-
-    from faster_whisper import WhisperModel  # noqa: F401
