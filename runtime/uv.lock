@@ -338,15 +338,14 @@ wheels = [
 
 [[package]]
 name = "ctranslate2"
-version = "4.6.2"
+version = "4.8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "pyyaml" },
-    { name = "setuptools" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/47/14f4ce74ae900d609e127a6de03f364f8b9e10bd6729d29e8b199da71b05/ctranslate2-4.6.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ff3a9714aa6a1ee8be6abda58fdd0ef819bb92f4da510e4bb65ab51ed62df64c", size = 38012473, upload-time = "2025-12-05T06:40:21.96Z" },
+    { url = "https://files.pythonhosted.org/packages/01/23/d72e70cac2b7c5c832a629c380235b53b20fac8c0921856bcf625b08ba44/ctranslate2-4.8.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:554a0b2abf098a11c66ef7930c0a05b3de683a455e8ea3f2e6ab6966aaabc136", size = 39555908, upload-time = "2026-08-31T19:37:27.948Z" },
 ]
 
 [[package]]
@@ -2814,7 +2813,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "accelerate" },
-    { name = "ctranslate2", specifier = "==4.6.2" },
+    { name = "ctranslate2", specifier = "==4.8.2" },
     { name = "datasets" },
     { name = "einops" },
     { name = "faster-whisper", specifier = "==1.2.1" },

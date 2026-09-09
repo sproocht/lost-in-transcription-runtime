@@ -44,8 +44,8 @@ def _tiny_whisper_model(path):
 
     Built here so the test needs no checkpoint and no network. The container
     has neither. The weights are random, so the output text means nothing. The
-    point is to run the kernels: the encoder convolutions call cuDNN and the
-    attention and feed-forward layers call cuBLAS.
+    point is to run the kernels: the encoder convolutions and the attention
+    and feed-forward layers all reach cuBLAS.
     """
     import numpy as np
     from ctranslate2.specs.whisper_spec import WhisperSpec
@@ -117,11 +117,9 @@ def test_ctranslate2_whisper_gpu_decode(tmp_path):
 
     An import test cannot see this break. libctranslate2 does not link cuBLAS.
     It opens the soname libcublas.so.12 the first time a model computes on the
-    GPU. The bundled cuDNN file is a dispatcher that opens its sublibraries by
-    name at the same point. Both live under site-packages, which the loader
-    does not search, so the Dockerfile adds those directories to the loader
-    cache. Without that the import tests still pass and this test aborts the
-    process.
+    GPU. That file lives under site-packages, which the loader does not
+    search, so the Dockerfile adds the directory to the loader cache. Without
+    that the import tests still pass and this test aborts the process.
     """
     import numpy as np
 
