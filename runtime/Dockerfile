@@ -60,6 +60,21 @@ ENV MAX_ORDER=10
 RUN --mount=type=cache,id=uv-cache-1,target=/home/runtimeuser/.cache/uv,uid=1000,gid=1000 \
     uv sync
 
+# ctranslate2 does not link cuBLAS or cuDNN. It opens them by name the first
+# time a model runs on the GPU, and it asks for the CUDA 12 build of cuBLAS
+# while this image is CUDA 13. The CUDA 12 build arrives only as a pip nvidia
+# package, which installs under site-packages where the loader does not look.
+# Without this the GPU path aborts the process with no error message, and an
+# import test still passes. Add both directories to the loader cache.
+USER root
+RUN SITE_PACKAGES=$(/code_execution/.venv/bin/python -c 'import site; print(site.getsitepackages()[0])') \
+    && printf '%s\n' \
+        "${SITE_PACKAGES}/nvidia/cublas/lib" \
+        "${SITE_PACKAGES}/nvidia/cudnn/lib" \
+        > /etc/ld.so.conf.d/ctranslate2-cuda.conf \
+    && ldconfig
+USER ${RUNTIME_USER}
+
 # Copy entrypoint
 COPY --chown=${RUNTIME_USER}:${RUNTIME_USER} \
     entrypoint.sh /entrypoint.sh
